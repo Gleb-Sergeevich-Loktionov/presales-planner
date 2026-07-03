@@ -9,7 +9,7 @@ _NAMES = ["Пётр Гарник", "Иван Буйнов", "Мария Таир
 
 def test_partial_first_name_resolves():
     assert match_person_name(_NAMES, "Пётр") == "Пётр Гарник"
-    assert match_person_name(_NAMES, "Андр") == "Иван Буйнов"
+    assert match_person_name(_NAMES, "Ив") == "Иван Буйнов"
 
 
 def test_yo_ye_equivalence():
@@ -17,7 +17,7 @@ def test_yo_ye_equivalence():
 
 
 def test_full_name_exact():
-    assert match_person_name(_NAMES, "лёша гарник") == "Пётр Гарник"
+    assert match_person_name(_NAMES, "пётр гарник") == "Пётр Гарник"
 
 
 def test_no_match_returns_none():

@@ -9,14 +9,13 @@ jobs:
   unit:
     runs-on: ubuntu-latest
     env:
-      # Dummy values so import-time settings validation passes; unit tests are IO-free.
+      # Minimal dummy env for any import-time reads. Deliberately NOT setting
+      # JWT_SECRET/DEBUG — the settings tests assert on their defaults.
       DATABASE_URL: postgresql+asyncpg://ci:ci@localhost:5432/ci
       REDIS_URL: redis://localhost:6379/0
       BOT_TOKEN: "0:ci-dummy-token"
       ANTHROPIC_API_KEY: "sk-ant-ci-dummy"
       TEAM_CHAT_ID: "1"
-      JWT_SECRET: "ci-dummy-secret-long-enough-000000000000"
-      DEBUG: "true"
     steps:
       - uses: actions/checkout@v4
       - name: Install uv
