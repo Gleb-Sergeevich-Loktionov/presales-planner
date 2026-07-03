@@ -1,0 +1,145 @@
+"""Tests for the AddProject reply orchestrator in the task router (spec 8.1)."""
+
+from __future__ import annotations
+
+from datetime import date, timedelta
+from uuid import uuid4
+
+import pytest
+
+from planner.app.add_project import (
+    ProjectTemplate,
+    TemplateTaskSpec,
+    serialize_plan,
+)
+from planner.app.ports import PersonRecord
+from planner.bot.handlers.task_router import build_add_project_reply
+from planner.domain.calendar.rules import WeekendCalendar
+from planner.domain.intent import AddProjectIntent
+from planner.domain.models import Assignment, DayAllocation, Person, PlanResult
+from planner.domain.solver.greedy import GreedySolver
+from tests.unit.app.conftest import FakeRepo
+
+TODAY = date(2026, 6, 5)
+
+
+def _setup_repo() -> tuple[FakeRepo, Person]:
+    repo = FakeRepo()
+    andrey = Person(id=uuid4(), name="Иван", capacity_h=8)
+    repo.solver_people = (andrey,)
+    repo.templates = {
+        "standard": ProjectTemplate(
+            code="standard",
+            tasks=(
+                TemplateTaskSpec(1, "Бриф", 8, (andrey.id,)),
+                TemplateTaskSpec(2, "Дизайн", 8, (andrey.id,), depends_on_ords=(1,)),
+            ),
+        )
+    }
+    return repo, andrey
+
+
+def _admin() -> PersonRecord:
+    return PersonRecord(id=uuid4(), name="Менеджер", is_admin=True)
+
+
+@pytest.mark.asyncio
+async def test_reply_contains_project_and_tasks():
+    repo, _ = _setup_repo()
+    intent = AddProjectIntent(
+        title="Альфа", template_code="standard", deadline=TODAY + timedelta(days=30)
+    )
+    reply, pv_id = await build_add_project_reply(
+        intent,
+        repo=repo,
+        solver=GreedySolver(WeekendCalendar()),
+        actor_record=_admin(),
+        today=TODAY,
+    )
+    assert "Альфа" in reply
+    assert "Бриф → Иван" in reply
+    assert "Дизайн → Иван" in reply
+    assert pv_id is not None
+    assert any(pv.status == "proposed" for pv in repo.plan_versions.values())
+
+
+@pytest.mark.asyncio
+async def test_committed_allocations_block_capacity():
+    repo, andrey = _setup_repo()
+    # Andrey is already fully booked (8h) on Mon 2026-06-08 by a committed plan.
+    booked_day = date(2026, 6, 8)
+    committed = PlanResult(
+        assignments=(
+            Assignment(
+                task_id=uuid4(),
+                person_id=andrey.id,
+                start_date=booked_day,
+                end_date=booked_day,
+                allocations=(DayAllocation(andrey.id, booked_day, 8),),
+            ),
+        )
+    )
+    repo.committed_payloads = [serialize_plan(committed)]
+
+    intent = AddProjectIntent(
+        title="Альфа", template_code="standard", deadline=TODAY + timedelta(days=30)
+    )
+    await build_add_project_reply(  # noqa: F841  (return value not needed here)
+        intent,
+        repo=repo,
+        solver=GreedySolver(WeekendCalendar()),
+        actor_record=_admin(),
+        today=TODAY,
+    )
+    # The new project's first task cannot land on the fully-booked Monday.
+    pv = next(iter(repo.plan_versions.values()))
+    starts = {a["start_date"] for a in pv.payload["assignments"]}
+    assert booked_day.isoformat() not in starts
+
+
+@pytest.mark.asyncio
+async def test_unknown_template_message():
+    repo, _ = _setup_repo()
+    intent = AddProjectIntent(title="Альфа", template_code="lite")
+    reply, pv_id = await build_add_project_reply(
+        intent,
+        repo=repo,
+        solver=GreedySolver(WeekendCalendar()),
+        actor_record=_admin(),
+        today=TODAY,
+    )
+    assert "не найден" in reply
+    assert pv_id is None
+
+
+@pytest.mark.asyncio
+async def test_no_people_message():
+    repo, _ = _setup_repo()
+    repo.solver_people = ()
+    intent = AddProjectIntent(title="Альфа", template_code="standard")
+    reply, pv_id = await build_add_project_reply(
+        intent,
+        repo=repo,
+        solver=GreedySolver(WeekendCalendar()),
+        actor_record=_admin(),
+        today=TODAY,
+    )
+    assert "нет активных людей" in reply
+    assert pv_id is None
+
+
+@pytest.mark.asyncio
+async def test_past_deadline_message():
+    repo, _ = _setup_repo()
+    intent = AddProjectIntent(
+        title="Альфа", template_code="standard", deadline=TODAY - timedelta(days=1)
+    )
+    reply, pv_id = await build_add_project_reply(
+        intent,
+        repo=repo,
+        solver=GreedySolver(WeekendCalendar()),
+        actor_record=_admin(),
+        today=TODAY,
+    )
+    assert "Не могу создать проект" in reply
+    assert pv_id is None

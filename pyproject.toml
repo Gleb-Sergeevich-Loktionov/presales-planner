@@ -1,0 +1,70 @@
+[project]
+name = "planner"
+version = "0.1.0"
+description = "Telegram bot for auto-scheduling presales team tasks"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aiogram>=3.14",
+    "aiogram-dialog",
+    "fastapi",
+    "uvicorn[standard]",
+    "jinja2",
+    "python-multipart",
+    "sqlalchemy[asyncio]>=2.0",
+    "alembic",
+    "asyncpg",
+    "networkx",
+    "anthropic",
+    "instructor",
+    "faster-whisper",
+    "httpx",
+    "pydantic>=2.0",
+    "pydantic-settings",
+    "structlog",
+    "apscheduler>=3.10,<4.0",
+    "matplotlib",
+    "seaborn",
+    "redis[hiredis]",
+    "pyjwt>=2.8",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "testcontainers[postgres,redis]",
+    "vcrpy",
+    "ruff",
+    "mypy",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/planner"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["B008"]  # FastAPI Depends() in function defaults is idiomatic
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+testpaths = ["tests"]
+markers = [
+    "live: hits real external APIs (LLM); opt-in via RUN_LLM_EVAL=1",
+]

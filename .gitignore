@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtualenv / tooling
+.venv/
+.env
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+
+# AI-agent / editor runtime + local artifacts (not for the repo)
+.claude/
+.agents/
+*.textClipping
+skills-lock.json
+# internal / client business docs — never publish
+*.pdf
+users-*-desktop-*.md
+docs/questionnaire.md
