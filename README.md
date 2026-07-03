@@ -5,6 +5,7 @@ respecting each person's capacity, task dependencies and deadlines — with a
 FastAPI web admin for hard edits. One process, one Postgres writer, single-tenant.
 
 <p>
+  <a href="https://github.com/Gleb-Sergeevich-Loktionov/presales-planner/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Gleb-Sergeevich-Loktionov/presales-planner/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="Python" src="https://img.shields.io/badge/python-3.12-blue">
   <img alt="aiogram" src="https://img.shields.io/badge/aiogram-3.x-2CA5E0">
   <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-async-009688?logo=fastapi&logoColor=white">
