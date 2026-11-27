@@ -1,41 +1,37 @@
 # presales-planner
 
-Telegram bot that **auto-schedules a team's tasks across people and days** —
-respecting each person's capacity, task dependencies and deadlines — with a
-FastAPI web admin for hard edits. One process, one Postgres writer, single-tenant.
+Schedule presales work across a team using task dependencies, deadlines, and individual capacity.
 
-<p>
-  <a href="https://github.com/Gleb-Sergeevich-Loktionov/presales-planner/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Gleb-Sergeevich-Loktionov/presales-planner/actions/workflows/ci.yml/badge.svg"></a>
-  <img alt="Python" src="https://img.shields.io/badge/python-3.12-blue">
-  <img alt="aiogram" src="https://img.shields.io/badge/aiogram-3.x-2CA5E0">
-  <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-async-009688?logo=fastapi&logoColor=white">
-  <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white">
-  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green">
-</p>
+[![CI](https://github.com/Gleb-Sergeevich-Loktionov/presales-planner/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/Gleb-Sergeevich-Loktionov/presales-planner/actions/workflows/ci.yml) ![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-3776AB?style=flat-square) ![License MIT](https://img.shields.io/badge/License-MIT-555555?style=flat-square) ![aiogram 3](https://img.shields.io/badge/aiogram-3-2CA5E0?style=flat-square) ![FastAPI async](https://img.shields.io/badge/FastAPI-async-009688?style=flat-square) ![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square)
 
-Give it a project and it assigns every task to the right person on the right day,
-flags overloads and unreachable deadlines, and explains its plan in plain language.
-Tasks can be captured by **text or voice**; the resulting plan is editable from the
-bot or the web admin. Intent parsing runs through Claude; scheduling is a
-deterministic greedy solver over a critical-path graph.
+## Key Engineering Highlights
+
+- The optional Claude Sonnet tool loop exposes 11 tools for planning, team lookup, workload queries, and task edits. Write tools check the caller’s role.
+- Claude Haiku parses task intents on the standard path. Both Claude paths have regex fallbacks, and faster-whisper transcribes Telegram voice messages locally.
+- The NetworkX-based `GreedySolver` schedules a dependency DAG using skills, capacity, deadlines, and working days. The `isdayoff` adapter falls back to a bundled calendar snapshot.
+- Async SQLAlchemy models map 17 PostgreSQL tables across six Alembic migrations. Captured tasks can be mirrored to Notion.
+- GitHub Actions runs Ruff on source and tests, strict mypy on the domain, and 580 unit tests. The complete pytest collection contains 663 tests.
 
 ## Architecture
 
-Four layers, dependencies point inward:
-
+```mermaid
+flowchart LR
+    TG["Telegram / aiogram 3"] <--> FSM["Redis FSM"]
+    TG -->|text| In["Task handler"]
+    TG -->|voice| STT["faster-whisper"] --> In
+    TG -->|commands and callbacks| App["Application use cases / planner.app"]
+    Web["FastAPI / htmx admin"] --> App
+    In -->|tool mode| Sonnet["Claude Sonnet / 11 tools"] --> App
+    In -->|intent mode| Haiku["Claude Haiku intent parser"] --> App
+    Sonnet -.-> Regex["Regex fallback"]
+    Haiku -.-> Regex
+    App --> Solver["GreedySolver / NetworkX dependency DAG"]
+    Calendar["isdayoff calendar / bundled snapshot fallback"] --> Solver
+    App <--> DB["PostgreSQL / async SQLAlchemy and Alembic"]
+    App -->|optional task mirror| Notion["Notion task sink"]
 ```
-bot/ (aiogram)   web/ (FastAPI + htmx)
-        \             /
-          app/ (use-cases)
-             |
-     domain/ (solver, calendar)   ← pure, no IO
-             |
-     infra/ (db, llm, stt, calendar, scheduler)
-```
 
-External integrations sit behind ports (`SolverPort`, `IntentParserPort`,
-`WorkingCalendar`, `RepoPort`, `STTPort`), so adapters are swappable and the
-domain stays pure and testable.
+External services sit behind ports for the solver, intent parser, calendar, repository, and transcription. The scheduling domain runs without I/O. The Notion sink is a best-effort mirror for task capture.
 
 ## Stack
 
