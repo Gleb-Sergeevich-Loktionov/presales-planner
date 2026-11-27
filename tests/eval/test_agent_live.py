@@ -42,8 +42,8 @@ _RUN = os.environ.get("RUN_AGENT_EVAL") == "1" and bool(
 
 # --- Seeded roster (small, deterministic) ---------------------------------
 
-_ANDREY = _Person("Иван", capacity_h=8)
-_DIMA_ID = uuid4()
+_IVAN = _Person("Иван", capacity_h=8)
+_NIKOLAY_ID = uuid4()
 _OLEG_ID = uuid4()
 
 PEOPLE = ("Иван", "Николай", "Олег")
@@ -57,23 +57,23 @@ def _seeded_repo() -> FakeRepo:
         tasks=(
             TemplateTaskSpec(
                 ord=1, name="дизайн", duration_hours=8,
-                allowed_person_ids=(_ANDREY.id,),
+                allowed_person_ids=(_IVAN.id,),
             ),
         ),
     )
     return FakeRepo(
         people=[
-            PersonRecord(_ANDREY.id, "Иван"),
-            PersonRecord(_DIMA_ID, "Николай"),
+            PersonRecord(_IVAN.id, "Иван"),
+            PersonRecord(_NIKOLAY_ID, "Николай"),
             PersonRecord(_OLEG_ID, "Олег"),
         ],
-        solver_people=[_ANDREY],
+        solver_people=[_IVAN],
         projects=[ProjectRecord(uuid4(), "Альфа", "planning")],
         capabilities=(
-            CapabilityRecord(person_id=_DIMA_ID, name="Николай", skills=frozenset({"дизайн"})),
+            CapabilityRecord(person_id=_NIKOLAY_ID, name="Николай", skills=frozenset({"дизайн"})),
             CapabilityRecord(person_id=_OLEG_ID, name="Олег", skills=frozenset({"аналитика"})),
         ),
-        people_by_name={"Иван": PersonRecord(_ANDREY.id, "Иван")},
+        people_by_name={"Иван": PersonRecord(_IVAN.id, "Иван")},
         template=template,
     )
 
@@ -115,7 +115,7 @@ CASES = [
     # Compound + conditional (the headline reported failure): read load, then —
     # if free — capture a task. We accept either the read alone or read→write.
     (
-        "покажи загрузку Андрея и если свободен поставь задачу подготовить КП по МТС",
+        "покажи загрузку Ивана и если свободен поставь задачу подготовить КП по МТС",
         {"get_team_load", "list_people", "capture_task"},
     ),
     # Decompose: several tasks in one message → capture_task per task.

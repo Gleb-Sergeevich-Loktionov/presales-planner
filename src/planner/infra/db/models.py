@@ -310,11 +310,7 @@ class AuditLog(Base):
 
 
 class TaskHistory(Base):
-    """Completed tasks per person — groundwork for history-based matching (spec Ф4).
-
-    No use case wires this yet; it exists so future executor suggestion can
-    factor in what a person has done before (spec section 5, point 2).
-    """
+    """Reserved history table for completed tasks per person."""
 
     __tablename__ = "task_history"
 

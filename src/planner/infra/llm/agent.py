@@ -6,7 +6,7 @@ existing use-cases in :mod:`planner.infra.llm.tools`). The deterministic solver
 stays the math — the agent only orchestrates and explains.
 
 Loop contract (spec architecture pseudocode):
-- ``MAX_ITERS=6`` tool rounds, ``temperature=0``, ``max_tokens=1024``.
+- ``_MAX_ITERS=10`` tool rounds, ``temperature=0``, ``max_tokens=1024``.
 - First user message = a context block (today / roster / projects / recent chat)
   + a ``---`` separator + the raw message.
 - Each ``tool_use`` block is dispatched through :meth:`ToolBox.execute` (which

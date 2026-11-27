@@ -4,7 +4,6 @@
 **Purpose:** Verify the MVP against the customer's stated assumptions. Each test maps one
 assumption → a concrete pass/fail check the customer can run in a real Telegram chat + admin web.
 **Legend:** ✅ verified · ⚠️ verified with defect · ❓ not verifiable this pass (needs live Telegram).
-Defect IDs reference `docs/qa-report-2026-06-11.md`.
 
 > Run order: set up a test team (≥3 people, 1 admin) in a Telegram group + the bot, and open
 > the admin web. Allow ≤2 "не понял, переспроси" per scenario before marking fail.
@@ -113,4 +112,3 @@ Defect IDs reference `docs/qa-report-2026-06-11.md`.
 ## Regression hook
 Each failing scenario above is reproduced as an automated test in `tests/` before its fix is
 merged, then re-run here. Tie each MVP-ID to a test module so the matrix stays live.
-</content>

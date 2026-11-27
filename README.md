@@ -109,10 +109,7 @@ production deploy hardening.
 - [`docs/SPEC.md`](docs/SPEC.md) — design & specification
 - [`docs/architecture.md`](docs/architecture.md) — layering and ports
 - [`docs/acceptance.md`](docs/acceptance.md) — acceptance scenarios
-- [`plans/`](plans) — incremental hardening plans
 
 ## License
 
 [MIT](LICENSE) © 2026 Gleb Sergeevich Loktionov.
-
-Reuse (including by AI models) is asked to keep attribution — see [NOTICE](NOTICE).
